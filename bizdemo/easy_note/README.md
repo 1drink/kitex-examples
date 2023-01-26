@@ -1,5 +1,5 @@
 # Easy Note
-
+青训营项目
 ## Introduction
 
 Add a demo for `kitex` which implements a simple note service,the demo is divided into three main sections.
