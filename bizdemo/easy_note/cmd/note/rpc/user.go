@@ -33,6 +33,7 @@ import (
 var userClient userservice.Client
 
 func initUserRpc() {
+	// 初始化Etcd的Resolver对象
 	r, err := etcd.NewEtcdResolver([]string{constants.EtcdAddress})
 	if err != nil {
 		panic(err)
@@ -40,11 +41,13 @@ func initUserRpc() {
 
 	c, err := userservice.NewClient(
 		constants.UserServiceName,
+		// 注入中间件
 		client.WithMiddleware(middleware.CommonMiddleware),
+		// 比Middleware提前，在获取Instance之间做的
 		client.WithInstanceMW(middleware.ClientMiddleware),
-		client.WithMuxConnection(1),                       // mux
+		client.WithMuxConnection(1),                       // mux 设置io多路复用Mutex
 		client.WithRPCTimeout(3*time.Second),              // rpc timeout
-		client.WithConnectTimeout(50*time.Millisecond),    // conn timeout
+		client.WithConnectTimeout(50*time.Millisecond),    // conn timeout链接超时
 		client.WithFailureRetry(retry.NewFailurePolicy()), // retry
 		client.WithSuite(trace.NewDefaultClientSuite()),   // tracer
 		client.WithResolver(r),                            // resolver
@@ -58,6 +61,7 @@ func initUserRpc() {
 // MGetUser multiple get list of user info
 func MGetUser(ctx context.Context, req *userdemo.MGetUserRequest) (map[int64]*userdemo.User, error) {
 	resp, err := userClient.MGetUser(ctx, req)
+	// 网络超时等错误
 	if err != nil {
 		return nil, err
 	}
